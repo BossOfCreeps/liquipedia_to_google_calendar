@@ -5,10 +5,11 @@ from bs4 import BeautifulSoup
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-URLS = ["https://liquipedia.net/dota2/Dota_Pro_Circuit/2021-22/3/Eastern_Europe/Division_I",
-        "https://liquipedia.net/dota2/Dota_Pro_Circuit/2021-22/3/Western_Europe/Division_I"]
-
-service = build('calendar', 'v3', credentials=InstalledAppFlow.from_client_secrets_file('credentials.json', ['https://www.googleapis.com/auth/calendar']).run_local_server(port=0))
+URLS = ["https://liquipedia.net/dota2/Riyadh_Masters/2022"]
+calendar_id = "pr1ej8epdlgiqviuaptfq7aupc@group.calendar.google.com"
+service = build('calendar', 'v3', credentials=InstalledAppFlow.
+                from_client_secrets_file('credentials.json', ['https://www.googleapis.com/auth/calendar']).
+                run_local_server(port=0))
 
 for url in URLS:
     soup = BeautifulSoup(requests.get(url).text, 'html.parser')
@@ -25,5 +26,5 @@ for url in URLS:
             'reminders': {'useDefault': False, 'overrides': [{'method': 'popup', 'minutes': 5}], },
         }
 
-        event = service.events().insert(calendarId='pr1ej8epdlgiqviuaptfq7aupc@group.calendar.google.com', body=event_data).execute()
+        event = service.events().insert(calendarId=calendar_id, body=event_data).execute()
         print(f"{team_1} vs {team_2} created: {event.get('htmlLink')}")
