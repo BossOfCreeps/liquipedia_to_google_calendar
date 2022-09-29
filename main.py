@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-URLS = ["https://liquipedia.net/dota2/The_International/2022/Eastern_Europe"]
+URLS = ["https://liquipedia.net/dota2/The_International/2022/Last_Chance_Qualifier"]
 
 service = build(
     'calendar', 'v3',
@@ -22,7 +22,16 @@ for url in URLS:
         else:
             team_1, team_2 = "команда", "команда"
 
-        date = datetime.strptime(match.find("span", class_="timer-object").text, '%B %d, %Y - %H:%M UTC')
+        datetime_str = match.find("span", class_="timer-object").text
+        if "CEST" in datetime_str:
+            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CEST')
+            date -= timedelta(hours=2)
+        elif "SGT" in datetime_str:
+            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M SGT')
+            date -= timedelta(hours=8)
+        elif datetime_str is None:
+            break
+
         event_data = {
             'summary': f"{team_1} vs {team_2}",
             'start': {'dateTime': date.isoformat(), 'timeZone': 'utc'},
