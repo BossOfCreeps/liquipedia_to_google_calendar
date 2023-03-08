@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-URLS = ["https://liquipedia.net/dota2/BetBoom_Xmas_Show/2022"]
+URLS = ["https://liquipedia.net/dota2/Dota_Pro_Circuit/2023/2/Western_Europe/Division_I"]
 
 service = build(
     'calendar', 'v3',
@@ -32,8 +32,12 @@ for url in URLS:
         elif "CET" in datetime_str:
             date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CET')
             date -= timedelta(hours=1)
+        elif "EST" in datetime_str:
+            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M EST')
+            date += timedelta(hours=5)
         else:
             print(datetime_str)
+            continue
 
         event_data = {
             'summary': f"{team_1} vs {team_2}",
@@ -43,7 +47,7 @@ for url in URLS:
         }
 
         event = service.events().insert(
-            calendarId="pr1ej8epdlgiqviuaptfq7aupc@group.calendar.google.com",
+            calendarId="44b22e3e97b007993052e6b6bd5843d44634699fd9084971f51a598ac233a949@group.calendar.google.com",
             body=event_data
         ).execute()
         print(f"{team_1} vs {team_2} created: {event.get('htmlLink')}")
