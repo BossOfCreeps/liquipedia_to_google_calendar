@@ -8,10 +8,9 @@ from googleapiclient.discovery import build
 URLS = ["https://liquipedia.net/dota2/Dota_Pro_Circuit/2023/2/Western_Europe/Division_I"]
 
 service = build(
-    'calendar', 'v3',
-    credentials=InstalledAppFlow
-    .from_client_secrets_file('credentials.json', ['https://www.googleapis.com/auth/calendar'])
-    .run_local_server(port=0)
+    'calendar', 'v3', credentials=InstalledAppFlow.from_client_secrets_file(
+        'credentials.json', ['https://www.googleapis.com/auth/calendar']
+    ).run_local_server(port=0)
 )
 
 for url in URLS:
@@ -24,17 +23,13 @@ for url in URLS:
 
         datetime_str = match.find("span", class_="timer-object").text
         if "CEST" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CEST')
-            date -= timedelta(hours=2)
+            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CEST') - timedelta(hours=2)
         elif "SGT" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M SGT')
-            date -= timedelta(hours=8)
+            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M SGT') - timedelta(hours=8)
         elif "CET" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CET')
-            date -= timedelta(hours=1)
+            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CET') - timedelta(hours=1)
         elif "EST" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M EST')
-            date += timedelta(hours=5)
+            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M EST') + timedelta(hours=5)
         else:
             print(datetime_str)
             continue
