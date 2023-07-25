@@ -30,6 +30,8 @@ for url in URLS:
             date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CET') - timedelta(hours=1)
         elif "EST" in datetime_str:
             date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M EST') + timedelta(hours=5)
+        elif "AST" in datetime_str:
+            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M AST') - timedelta(hours=3)
         else:
             print(datetime_str)
             continue
