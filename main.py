@@ -24,6 +24,8 @@ for url in URLS:
         datetime_str = match.find("span", class_="timer-object").text
         if "CEST" in datetime_str:
             date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CEST') - timedelta(hours=2)
+        elif "EEST" in datetime_str:
+            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M EEST') - timedelta(hours=3)
         elif "SGT" in datetime_str:
             date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M SGT') - timedelta(hours=8)
         elif "CET" in datetime_str:
@@ -44,7 +46,7 @@ for url in URLS:
         }
 
         event = service.events().insert(
-            calendarId="44b22e3e97b007993052e6b6bd5843d44634699fd9084971f51a598ac233a949@group.calendar.google.com",
+            calendarId="293cf6ff4b35fa9ba28aaafef799efec0333f97b18f0fac60f01ab18c797e16e@group.calendar.google.com",
             body=event_data
         ).execute()
         print(f"{team_1} vs {team_2} created: {event.get('htmlLink')}")
