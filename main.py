@@ -1,13 +1,15 @@
+import os
 from datetime import datetime, timedelta
 
 import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-CALENDAR_ID = "293cf6ff4b35fa9ba28aaafef799efec0333f97b18f0fac60f01ab18c797e16e@group.calendar.google.com"
-
-URLS = ["https://liquipedia.net/dota2/The_International/2023/Group_Stage"]
+load_dotenv()
+CALENDAR_ID = os.getenv("CALENDAR_ID")
+URLS = os.getenv("URLS").split(";")
 
 service = build(
     "calendar",

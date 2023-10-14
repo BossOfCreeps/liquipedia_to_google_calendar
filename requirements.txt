@@ -23,3 +23,4 @@ six==1.16.0
 soupsieve==2.3.2.post1
 uritemplate==4.1.1
 urllib3==1.26.9
+python-dotenv==0.19.2
