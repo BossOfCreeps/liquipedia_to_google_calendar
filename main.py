@@ -30,15 +30,15 @@ def parse_liquidpedia():
                 team_1, team_2 = (team.text for team in match.find_all("span", class_="name"))
 
             datetime_str = match.find("span", class_="timer-object").text
-
             date = None
+
             for tz, hour in {"CEST": -2, "EEST": -3, "SGT": -8, "CET": -1, "EST": 5, "AST": -3, "PDT": 7}.items():
                 if tz in datetime_str:
                     date = datetime.strptime(datetime_str, f"%B %d, %Y - %H:%M {tz}") + timedelta(hours=hour)
                     break
 
             if date is None:
-                raise Exception(date)
+                raise Exception(datetime_str)
 
             data = {
                 "summary": f"{team_1} vs {team_2}",
