@@ -1,52 +1,67 @@
 from datetime import datetime, timedelta
 
-import requests as requests
+import requests
 from bs4 import BeautifulSoup
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-URLS = ["https://liquipedia.net/dota2/Dota_Pro_Circuit/2023/2/Western_Europe/Division_I"]
+CALENDAR_ID = "293cf6ff4b35fa9ba28aaafef799efec0333f97b18f0fac60f01ab18c797e16e@group.calendar.google.com"
+
+URLS = ["https://liquipedia.net/dota2/The_International/2023/Group_Stage"]
 
 service = build(
-    'calendar', 'v3', credentials=InstalledAppFlow.from_client_secrets_file(
-        'credentials.json', ['https://www.googleapis.com/auth/calendar']
-    ).run_local_server(port=0)
-)
+    "calendar",
+    "v3",
+    credentials=InstalledAppFlow.from_client_secrets_file(
+        "credentials.json", ["https://www.googleapis.com/auth/calendar"]
+    ).run_local_server(port=0),
+).events()
 
-for url in URLS:
-    soup = BeautifulSoup(requests.get(url).text, 'html.parser')
-    for match in soup.find_all("div", class_="brkts-popup brkts-match-info-popup"):
-        if len(match.find_all("span", class_="name")) == 2:
-            team_1, team_2 = (team.text for team in match.find_all("span", class_="name"))
-        else:
+
+def parse_liquidpedia():
+    result = []
+    for url in URLS:
+        soup = BeautifulSoup(requests.get(url).text, "html.parser")
+        for match in soup.find_all("div", class_="brkts-popup brkts-match-info-popup"):
             team_1, team_2 = "команда", "команда"
+            if len(match.find_all("span", class_="name")) == 2:
+                team_1, team_2 = (team.text for team in match.find_all("span", class_="name"))
 
-        datetime_str = match.find("span", class_="timer-object").text
-        if "CEST" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CEST') - timedelta(hours=2)
-        elif "EEST" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M EEST') - timedelta(hours=3)
-        elif "SGT" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M SGT') - timedelta(hours=8)
-        elif "CET" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M CET') - timedelta(hours=1)
-        elif "EST" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M EST') + timedelta(hours=5)
-        elif "AST" in datetime_str:
-            date = datetime.strptime(datetime_str, '%B %d, %Y - %H:%M AST') - timedelta(hours=3)
+            datetime_str = match.find("span", class_="timer-object").text
+
+            date = None
+            for tz, hour in {"CEST": -2, "EEST": -3, "SGT": -8, "CET": -1, "EST": 5, "AST": -3, "PDT": 7}.items():
+                if tz in datetime_str:
+                    date = datetime.strptime(datetime_str, f"%B %d, %Y - %H:%M {tz}") + timedelta(hours=hour)
+                    break
+
+            if date is None:
+                raise Exception(date)
+
+            data = {
+                "summary": f"{team_1} vs {team_2}",
+                "start": {"dateTime": date.isoformat(), "timeZone": "utc"},
+                "end": {"dateTime": (date + timedelta(hours=2)).isoformat(), "timeZone": "utc"},
+                "reminders": {
+                    "useDefault": False,
+                    "overrides": [{"method": "popup", "minutes": 5}],
+                },
+            }
+            result.append([date, f"{team_1} vs {team_2}", data])
+
+    return result
+
+
+if __name__ == "__main__":
+    exists = []
+    for event in service.list(calendarId=CALENDAR_ID).execute().get("items", []):
+        if event["summary"] == "команда vs команда":
+            service.delete(calendarId=CALENDAR_ID, eventId=event["id"]).execute()
         else:
-            print(datetime_str)
-            continue
-
-        event_data = {
-            'summary': f"{team_1} vs {team_2}",
-            'start': {'dateTime': date.isoformat(), 'timeZone': 'utc'},
-            'end': {'dateTime': (date + timedelta(hours=2)).isoformat(), 'timeZone': 'utc'},
-            'reminders': {'useDefault': False, 'overrides': [{'method': 'popup', 'minutes': 5}], },
-        }
-
-        event = service.events().insert(
-            calendarId="293cf6ff4b35fa9ba28aaafef799efec0333f97b18f0fac60f01ab18c797e16e@group.calendar.google.com",
-            body=event_data
-        ).execute()
-        print(f"{team_1} vs {team_2} created: {event.get('htmlLink')}")
+            if "dateTime" in event["start"]:
+                event_date = datetime.fromisoformat(event["start"]["dateTime"]).replace(tzinfo=None) - timedelta(hours=7)
+                exists.append([event_date, event["summary"]])
+    for event_date, summary, event_data in parse_liquidpedia():
+        if [event_date, summary] not in exists and event_date > datetime.now():
+            created_event = service.insert(calendarId=CALENDAR_ID, body=event_data).execute()
+            print(f"{event_data['summary']} created: {created_event.get('htmlLink')}")
