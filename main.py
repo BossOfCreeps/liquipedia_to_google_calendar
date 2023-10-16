@@ -29,7 +29,10 @@ def parse_liquidpedia():
             if len(match.find_all("span", class_="name")) == 2:
                 team_1, team_2 = (team.text for team in match.find_all("span", class_="name"))
 
-            datetime_str = match.find("span", class_="timer-object").text
+            datetime_obj = match.find("span", class_="timer-object")
+            if datetime_obj is None:
+                continue
+            datetime_str = datetime_obj.text
             date = None
 
             for tz, hour in {"CEST": -2, "EEST": -3, "SGT": -8, "CET": -1, "EST": 5, "AST": -3, "PDT": 7}.items():
