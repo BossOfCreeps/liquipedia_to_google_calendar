@@ -25,9 +25,11 @@ def parse_liquidpedia():
     for url in URLS:
         soup = BeautifulSoup(requests.get(url).text, "html.parser")
         for match in soup.find_all("div", class_="brkts-popup brkts-match-info-popup"):
-            team_1, team_2 = "команда", "команда"
-            if len(match.find_all("span", class_="name")) == 2:
-                team_1, team_2 = (team.text for team in match.find_all("span", class_="name"))
+            teams, team_1, team_2 = match.find_all("span", class_="name"), "команда", "команда"
+            if len(teams) == 1:
+                team_1 = teams[0].text
+            elif len(teams) == 2:
+                team_1, team_2 = (t.text for t in teams)
 
             datetime_obj = match.find("span", class_="timer-object")
             if datetime_obj is None:
@@ -59,13 +61,13 @@ def parse_liquidpedia():
 
 if __name__ == "__main__":
     exists = []
-    for event in service.list(calendarId=CALENDAR_ID).execute().get("items", []):
-        if event["summary"] == "команда vs команда":
-            service.delete(calendarId=CALENDAR_ID, eventId=event["id"]).execute()
+    for e in service.list(calendarId=CALENDAR_ID).execute().get("items", []):
+        if "команда" in e["summary"]:
+            service.delete(calendarId=CALENDAR_ID, eventId=e["id"]).execute()
         else:
-            if "dateTime" in event["start"]:
-                event_date = datetime.fromisoformat(event["start"]["dateTime"]).replace(tzinfo=None) - timedelta(hours=7)
-                exists.append([event_date, event["summary"]])
+            if "dateTime" in e["start"]:
+                event_date = datetime.fromisoformat(e["start"]["dateTime"]).replace(tzinfo=None) - timedelta(hours=7)
+                exists.append([event_date, e["summary"]])
     for event_date, summary, event_data in parse_liquidpedia():
         if [event_date, summary] not in exists and event_date > datetime.now():
             created_event = service.insert(calendarId=CALENDAR_ID, body=event_data).execute()
