@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 
 load_dotenv()
 CALENDAR_ID = os.getenv("CALENDAR_ID")
-URLS = os.getenv("URLS").split(";")
+URLS = os.getenv("URLS").split(",")
 
 service = build(
     "calendar",
